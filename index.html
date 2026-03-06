@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Black Sheep MER Calculator</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500;600&family=Playfair+Display:wght@700&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0a0a12; color: #e2e2f0; font-family: 'DM Sans', sans-serif; min-height: 100vh; padding: 24px 16px; }
+  h1 { font-family: 'Playfair Display', serif; font-size: 28px; font-weight: 700; background: linear-gradient(135deg, #f0f0f8, #a0a0c0); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 6px; }
+  .header { text-align: center; margin-bottom: 32px; }
+  .badge { display: inline-block; background: rgba(226,183,20,0.1); border: 1px solid rgba(226,183,20,0.2); border-radius: 20px; padding: 4px 14px; font-size: 11px; color: #e2b714; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 12px; }
+  .subtitle { font-size: 13px; color: #606078; }
+  .wrap { max-width: 520px; margin: 0 auto; }
+  .tabs { display: flex; gap: 4px; background: rgba(255,255,255,0.04); border-radius: 10px; padding: 4px; margin-bottom: 24px; }
+  .tab { flex: 1; padding: 8px; background: transparent; border: none; border-radius: 7px; color: #606078; font-size: 12px; cursor: pointer; font-family: 'DM Sans', sans-serif; letter-spacing: 0.5px; transition: all 0.15s; }
+  .tab.active { background: rgba(255,255,255,0.08); color: #f0f0f8; }
+  .panel { display: none; }
+  .panel.active { display: block; }
+  .card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: 14px; padding: 20px; margin-bottom: 16px; }
+  .section-label { font-size: 11px; color: #505068; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 16px; }
+  .input-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.06); }
+  .input-row label { font-size: 13px; color: #a0a0b0; flex: 1; }
+  .input-wrap { display: flex; align-items: center; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12); border-radius: 6px; overflow: hidden; }
+  .input-wrap span { padding: 6px 8px; color: #6b6b80; font-size: 13px; }
+  .input-wrap span.pre { border-right: 1px solid rgba(255,255,255,0.08); }
+  .input-wrap span.suf { border-left: 1px solid rgba(255,255,255,0.08); }
+  .input-wrap input[type=number] { background: transparent; border: none; outline: none; color: #f0f0f8; font-size: 13px; padding: 6px 10px; width: 100px; text-align: right; font-family: 'DM Mono', monospace; }
+  .input-wrap input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
+  .metric { display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 12px 16px; margin-bottom: 6px; }
+  .metric.pos { background: linear-gradient(135deg,#0f3d2e,#1a5c42); border-color: rgba(74,222,128,0.2); }
+  .metric.neg { background: linear-gradient(135deg,#3d0f0f,#5c1a1a); border-color: rgba(248,113,113,0.2); }
+  .metric.hl { background: linear-gradient(135deg,#1a1a2e,#16213e); }
+  .metric-label { font-size: 12px; color: #8080a0; }
+  .metric-value { font-size: 14px; font-weight: 700; color: #c0c0d0; font-family: 'DM Mono', monospace; }
+  .metric.pos .metric-value { color: #4ade80; }
+  .metric.neg .metric-value { color: #f87171; }
+  .metric.large .metric-value { font-size: 18px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+  .mini-card { border-radius: 10px; padding: 14px; }
+  .mini-card p { margin: 0; }
+  .mini-card .mc-label { font-size: 11px; color: #606078; margin-bottom: 6px; }
+  .mini-card .mc-value { font-size: 22px; font-family: 'DM Mono', monospace; font-weight: 700; }
+  .mini-card .mc-sub { font-size: 10px; color: #505060; margin-top: 4px; }
+  .insight { border-radius: 10px; padding: 14px 16px; font-size: 12px; line-height: 1.6; margin-top: 8px; }
+  .callout { border-radius: 10px; padding: 14px 16px; font-size: 12px; color: #c8a010; line-height: 1.6; background: rgba(226,183,20,0.06); border: 1px solid rgba(226,183,20,0.15); margin-top: 8px; }
+  /* Slider */
+  .slider-wrap { margin-bottom: 20px; }
+  .slider-head { display: flex; justify-content: space-between; margin-bottom: 8px; }
+  .slider-head span { font-size: 12px; color: #8080a0; }
+  .slider-head strong { font-size: 13px; color: #e2b714; font-family: 'DM Mono', monospace; font-weight: 600; }
+  .slider-track { position: relative; height: 6px; background: rgba(255,255,255,0.08); border-radius: 3px; }
+  .slider-fill { position: absolute; left: 0; top: 0; height: 100%; background: linear-gradient(90deg,#e2b714,#f0d060); border-radius: 3px; pointer-events: none; }
+  .slider-thumb { position: absolute; top: -5px; width: 16px; height: 16px; background: #e2b714; border-radius: 50%; box-shadow: 0 0 8px rgba(226,183,20,0.5); pointer-events: none; transform: translateX(-50%); }
+  input[type=range] { position: absolute; top: -8px; left: 0; width: 100%; height: 22px; opacity: 0; cursor: pointer; margin: 0; -webkit-appearance: none; appearance: none; }
+  .slider-minmax { display: flex; justify-content: space-between; margin-top: 4px; font-size: 10px; color: #505060; }
+  /* MER zones bar */
+  .zones-bar { height: 6px; background: rgba(255,255,255,0.06); border-radius: 3px; position: relative; overflow: hidden; margin: 6px 0 4px; }
+  .zone { position: absolute; top: 0; height: 100%; }
+  .zones-labels { display: flex; justify-content: space-between; font-size: 9px; margin-top: 4px; }
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <!-- Header -->
+  <div class="header">
+    <div class="badge">Marketing Efficiency</div>
+    <h1>MER Calculator</h1>
+    <p class="subtitle">Black Sheep · Scaling Intelligence</p>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('inputs')">Inputs</button>
+    <button class="tab" onclick="switchTab('efficiency')">Efficiency</button>
+    <button class="tab" onclick="switchTab('scenario')">📊 Scenario</button>
+    <button class="tab" onclick="switchTab('bridge')">🔀 Channels</button>
+  </div>
+
+  <!-- INPUTS -->
+  <div id="panel-inputs" class="panel active">
+    <div class="card">
+      <p class="section-label">Business Inputs</p>
+      <div class="input-row"><label>Average Order Value</label><div class="input-wrap"><span class="pre">$</span><input type="number" id="aov" value="240" step="5" min="0" oninput="calc()" /></div></div>
+      <div class="input-row"><label>COGS per Order</label><div class="input-wrap"><span class="pre">$</span><input type="number" id="cogs" value="72" step="1" min="0" oninput="calc()" /></div></div>
+      <div class="input-row"><label>Shipping &amp; Packaging</label><div class="input-wrap"><span class="pre">$</span><input type="number" id="shipping" value="17.30" step="0.5" min="0" oninput="calc()" /></div></div>
+      <div class="input-row"><label>Payment Processing</label><div class="input-wrap"><input type="number" id="payment" value="2.60" step="0.1" min="0" oninput="calc()" /><span class="suf">%</span></div></div>
+      <div class="input-row"><label>Returns Allowance</label><div class="input-wrap"><input type="number" id="returns" value="3.70" step="0.1" min="0" oninput="calc()" /><span class="suf">%</span></div></div>
+      <div class="input-row"><label>Target Net Profit Margin</label><div class="input-wrap"><input type="number" id="targetMargin" value="5.00" step="0.5" min="0" oninput="calc()" /><span class="suf">%</span></div></div>
+      <div class="input-row"><label>Monthly Fixed Costs</label><div class="input-wrap"><span class="pre">$</span><input type="number" id="fixedCosts" value="120000" step="1000" min="0" oninput="calc()" /></div></div>
+      <div class="input-row"><label>Monthly Revenue (Current)</label><div class="input-wrap"><span class="pre">$</span><input type="number" id="currentRevenue" value="180000" step="5000" min="0" oninput="calc()" /></div></div>
+      <div class="input-row"><label>Monthly Marketing Spend (Current)</label><div class="input-wrap"><span class="pre">$</span><input type="number" id="currentSpend" value="13000" step="500" min="0" oninput="calc()" /></div></div>
+    </div>
+  </div>
+
+  <!-- EFFICIENCY -->
+  <div id="panel-efficiency" class="panel">
+    <div class="card">
+      <p class="section-label">Measuring Efficiency</p>
+      <div id="eff-metrics"></div>
+    </div>
+    <div class="card">
+      <p class="section-label">Measuring Profitability</p>
+      <div id="profit-metrics"></div>
+    </div>
+    <div class="callout" id="breakeven-callout"></div>
+  </div>
+
+  <!-- SCENARIO -->
+  <div id="panel-scenario" class="panel">
+    <div class="card">
+      <p class="section-label">Spend Scenario Modeller</p>
+      <div class="slider-wrap">
+        <div class="slider-head"><span>Monthly Marketing Spend</span><strong id="spend-label">$13,000.00</strong></div>
+        <div class="slider-track" id="slider-track">
+          <div class="slider-fill" id="slider-fill"></div>
+          <div class="slider-thumb" id="slider-thumb"></div>
+          <input type="range" id="scenarioSpend" min="1000" max="150000" step="500" value="13000" oninput="calc()" />
+        </div>
+        <div class="slider-minmax"><span>$1,000.00</span><span>$150,000.00</span></div>
+      </div>
+      <!-- MER Zone bar -->
+      <div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+          <span style="font-size:11px;color:#8080a0;">MER at this spend</span>
+          <span id="mer-indicator" style="font-size:13px;font-family:'DM Mono',monospace;font-weight:600;"></span>
+        </div>
+        <div class="zones-bar">
+          <div class="zone" id="zone-loss" style="background:rgba(248,113,113,0.3);left:0;"></div>
+          <div class="zone" id="zone-mid" style="background:rgba(251,191,36,0.3);"></div>
+          <div class="zone" id="zone-profit" style="background:rgba(74,222,128,0.3);"></div>
+        </div>
+        <div class="zones-labels">
+          <span style="color:#f87171;">Loss zone</span>
+          <span style="color:#fbbf24;">Breakeven</span>
+          <span style="color:#4ade80;">Profit zone ✓</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid2" id="scenario-grid"></div>
+    <div class="card" style="margin-bottom:8px;">
+      <p class="section-label" style="margin-bottom:12px;">At this spend level</p>
+      <div id="scenario-detail"></div>
+    </div>
+    <div class="insight" id="scenario-insight"></div>
+  </div>
+
+  <!-- CHANNEL BRIDGE -->
+  <div id="panel-bridge" class="panel">
+
+    <!-- Total spend input -->
+    <div class="card">
+      <p class="section-label">Total Monthly Spend</p>
+      <div class="input-row"><label>Total Ad Spend</label><div class="input-wrap"><span class="pre">$</span><input type="number" id="b-totalSpend" value="13000" step="500" min="0" oninput="calcBridge()" /></div></div>
+      <div class="input-row"><label>Total Monthly Revenue</label><div class="input-wrap"><span class="pre">$</span><input type="number" id="b-totalRevenue" value="180000" step="5000" min="0" oninput="calcBridge()" /></div></div>
+    </div>
+
+    <!-- Channel inputs -->
+    <div class="card">
+      <p class="section-label">Channel ROAS & Spend</p>
+
+      <!-- Google -->
+      <div style="background:rgba(66,133,244,0.07);border:1px solid rgba(66,133,244,0.18);border-radius:10px;padding:14px;margin-bottom:10px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+          <div style="width:28px;height:28px;background:rgba(66,133,244,0.2);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:14px;">G</div>
+          <span style="font-size:13px;color:#90b8f8;font-weight:600;">Google Ads</span>
+          <span id="g-roas-badge" style="margin-left:auto;font-size:11px;background:rgba(66,133,244,0.15);color:#90b8f8;border-radius:12px;padding:2px 8px;font-family:'DM Mono',monospace;"></span>
+        </div>
+        <div class="input-row" style="border-color:rgba(66,133,244,0.1)"><label>Monthly Spend</label><div class="input-wrap" style="border-color:rgba(66,133,244,0.2)"><span class="pre">$</span><input type="number" id="g-spend" value="8000" step="500" min="0" oninput="syncSpend('g');calcBridge()" /></div></div>
+        <div class="input-row" style="border-color:rgba(66,133,244,0.1)"><label>Reported ROAS</label><div class="input-wrap" style="border-color:rgba(66,133,244,0.2)"><input type="number" id="g-roas" value="8.5" step="0.1" min="0" oninput="calcBridge()" /><span class="suf">x</span></div></div>
+        <div class="input-row" style="border:none;padding-bottom:0"><label>Attribution Model</label>
+          <select id="g-attr" onchange="calcBridge()" style="background:rgba(255,255,255,0.05);border:1px solid rgba(66,133,244,0.2);border-radius:6px;color:#f0f0f8;font-size:12px;padding:6px 10px;font-family:'DM Sans',sans-serif;outline:none;">
+            <option value="0.75" selected>Last Click (−25%)</option>
+            <option value="0.85">Data Driven (−15%)</option>
+            <option value="0.95">Linear (−5%)</option>
+            <option value="1.0">True / MER-aligned</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Meta -->
+      <div style="background:rgba(24,119,242,0.07);border:1px solid rgba(24,119,242,0.18);border-radius:10px;padding:14px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+          <div style="width:28px;height:28px;background:rgba(24,119,242,0.2);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:14px;">f</div>
+          <span style="font-size:13px;color:#89a8f0;font-weight:600;">Meta Ads</span>
+          <span id="m-roas-badge" style="margin-left:auto;font-size:11px;background:rgba(24,119,242,0.15);color:#89a8f0;border-radius:12px;padding:2px 8px;font-family:'DM Mono',monospace;"></span>
+        </div>
+        <div class="input-row" style="border-color:rgba(24,119,242,0.1)"><label>Monthly Spend</label><div class="input-wrap" style="border-color:rgba(24,119,242,0.2)"><span class="pre">$</span><input type="number" id="m-spend" value="5000" step="500" min="0" oninput="syncSpend('m');calcBridge()" /></div></div>
+        <div class="input-row" style="border-color:rgba(24,119,242,0.1)"><label>Reported ROAS</label><div class="input-wrap" style="border-color:rgba(24,119,242,0.2)"><input type="number" id="m-roas" value="4.2" step="0.1" min="0" oninput="calcBridge()" /><span class="suf">x</span></div></div>
+        <div class="input-row" style="border:none;padding-bottom:0"><label>Attribution Model</label>
+          <select id="m-attr" onchange="calcBridge()" style="background:rgba(255,255,255,0.05);border:1px solid rgba(24,119,242,0.2);border-radius:6px;color:#f0f0f8;font-size:12px;padding:6px 10px;font-family:'DM Sans',sans-serif;outline:none;">
+            <option value="0.6" selected>7-day click / 1-day view (−40%)</option>
+            <option value="0.7">7-day click only (−30%)</option>
+            <option value="0.85">Click + view adjusted (−15%)</option>
+            <option value="1.0">True / MER-aligned</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Spend split slider -->
+    <div class="card">
+      <p class="section-label">Spend Split Modeller</p>
+      <div class="slider-wrap" style="margin-bottom:8px;">
+        <div class="slider-head"><span>Google ← Split → Meta</span><strong id="split-label">62% / 38%</strong></div>
+        <div class="slider-track">
+          <div class="slider-fill" id="split-fill" style="background:linear-gradient(90deg,#4285f4,#6fa3f8);"></div>
+          <div class="slider-thumb" id="split-thumb" style="background:#4285f4;box-shadow:0 0 8px rgba(66,133,244,0.5);"></div>
+          <input type="range" id="splitPct" min="0" max="100" step="1" value="62" oninput="onSplitSlider()" />
+        </div>
+        <div class="slider-minmax"><span style="color:#4285f4;">100% Google</span><span style="color:#1877f2;">100% Meta</span></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px;">
+        <div style="background:rgba(66,133,244,0.08);border:1px solid rgba(66,133,244,0.15);border-radius:8px;padding:10px;text-align:center;">
+          <p style="font-size:10px;color:#6090c8;margin-bottom:4px;">Google Spend</p>
+          <p id="g-split-spend" style="font-size:16px;font-family:'DM Mono',monospace;font-weight:700;color:#90b8f8;margin:0;"></p>
+        </div>
+        <div style="background:rgba(24,119,242,0.08);border:1px solid rgba(24,119,242,0.15);border-radius:8px;padding:10px;text-align:center;">
+          <p style="font-size:10px;color:#5080b8;margin-bottom:4px;">Meta Spend</p>
+          <p id="m-split-spend" style="font-size:16px;font-family:'DM Mono',monospace;font-weight:700;color:#89a8f0;margin:0;"></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Halo Effect -->
+    <div class="card" style="border-color:rgba(168,85,247,0.2);background:rgba(168,85,247,0.04);">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+        <span style="font-size:16px;">🔗</span>
+        <p class="section-label" style="margin-bottom:0;color:#c084fc;">Meta → Google Halo Effect</p>
+        <span style="margin-left:auto;font-size:10px;background:rgba(168,85,247,0.15);color:#c084fc;border-radius:10px;padding:2px 8px;border:1px solid rgba(168,85,247,0.3);">Data-derived</span>
+      </div>
+      <p style="font-size:11px;color:#7070a0;margin-bottom:16px;line-height:1.6;">Based on your historical data: Google ROAS averaged <strong style="color:#c084fc;">11–14x</strong> with strong Meta spend vs <strong style="color:#c084fc;">5–7x</strong> with minimal Meta spend — suggesting a ~40% halo dependency.</p>
+
+      <div class="slider-wrap" style="margin-bottom:12px;">
+        <div class="slider-head"><span>Google dependency on Meta spend</span><strong id="halo-label" style="color:#c084fc;">40%</strong></div>
+        <div class="slider-track">
+          <div class="slider-fill" id="halo-fill" style="background:linear-gradient(90deg,#a855f7,#c084fc);width:40%;"></div>
+          <div class="slider-thumb" id="halo-thumb" style="background:#a855f7;box-shadow:0 0 8px rgba(168,85,247,0.5);left:40%;"></div>
+          <input type="range" id="haloPct" min="0" max="80" step="5" value="40" oninput="calcBridge()" />
+        </div>
+        <div class="slider-minmax"><span>No dependency</span><span>High dependency (80%)</span></div>
+      </div>
+
+      <!-- Scenario: what if Meta spend changes -->
+      <div style="margin-top:4px;">
+        <p style="font-size:11px;color:#7070a0;margin-bottom:8px;text-transform:uppercase;letter-spacing:1px;">Model a Meta spend change</p>
+        <div class="slider-wrap" style="margin-bottom:4px;">
+          <div class="slider-head"><span>Meta spend change</span><strong id="meta-change-label" style="color:#89a8f0;">0%</strong></div>
+          <div class="slider-track">
+            <div style="position:absolute;left:50%;top:0;width:1px;height:100%;background:rgba(255,255,255,0.2);pointer-events:none;"></div>
+            <div class="slider-fill" id="meta-change-fill" style="background:linear-gradient(90deg,#f87171,#fbbf24);width:50%;left:50%;"></div>
+            <div class="slider-thumb" id="meta-change-thumb" style="background:#a0a0c0;box-shadow:none;left:50%;"></div>
+            <input type="range" id="metaChangePct" min="-100" max="100" step="5" value="0" oninput="calcBridge()" />
+          </div>
+          <div class="slider-minmax"><span style="color:#f87171;">−100% (pause)</span><span style="color:#4ade80;">+100% (double)</span></div>
+        </div>
+      </div>
+
+      <!-- Halo impact preview -->
+      <div id="halo-impact" style="margin-top:12px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;"></div>
+    </div>
+
+    <!-- Bridge results -->
+    <div class="card">
+      <p class="section-label">ROAS → Blended MER Bridge</p>
+      <div id="bridge-metrics"></div>
+    </div>
+
+    <div id="bridge-insight" class="insight"></div>
+  </div>
+</div>
+
+<script>
+const fmt = n => Math.abs(n).toLocaleString('en-AU', {minimumFractionDigits:2,maximumFractionDigits:2});
+const fmtPct = n => n.toFixed(2) + '%';
+const fmtMER = n => n.toFixed(2);
+
+function get(id) { return parseFloat(document.getElementById(id).value) || 0; }
+
+function metricHTML(label, value, cls='') {
+  return `<div class="metric ${cls}"><span class="metric-label">${label}</span><span class="metric-value">${value}</span></div>`;
+}
+
+function calc() {
+  const aov = get('aov'), cogs = get('cogs'), shipping = get('shipping');
+  const payment = get('payment'), returns = get('returns');
+  const targetMargin = get('targetMargin'), fixedCosts = get('fixedCosts');
+  const currentRevenue = get('currentRevenue'), scenarioSpend = get('scenarioSpend');
+  const currentSpend = get('currentSpend');
+
+  const paymentCost = aov * (payment / 100);
+  const returnsCost = aov * (returns / 100);
+  const totalVC = cogs + shipping + paymentCost + returnsCost;
+  const cmPct = ((aov - totalVC) / aov) * 100;
+  const breakEvenMER = aov / (aov - totalVC);
+  const idealMER = aov / (aov - totalVC - aov * (targetMargin / 100));
+  const maxCAC = aov - totalVC;
+  const actualMER = currentSpend > 0 ? currentRevenue / currentSpend : 0;
+  const merGap = actualMER - idealMER;
+  const cam = (currentRevenue * (cmPct / 100)) - scenarioSpend;
+  const netProfit = cam - fixedCosts;
+  const netProfitMargin = (netProfit / currentRevenue) * 100;
+  const breakEvenRevenue = fixedCosts / (cmPct / 100) + scenarioSpend;
+  const targetRevenue = (fixedCosts + scenarioSpend) / ((cmPct / 100) - (targetMargin / 100));
+
+  // Efficiency tab
+  document.getElementById('eff-metrics').innerHTML =
+    metricHTML('Total Variable Cost Per Order', `$${fmt(totalVC)}`, 'hl') +
+    metricHTML('Contribution Margin %', fmtPct(cmPct), 'hl') +
+    metricHTML('Breakeven MER', fmtMER(breakEvenMER), 'hl') +
+    metricHTML('Ideal MER (With Target Profit)', fmtMER(idealMER), 'hl') +
+    metricHTML('Max Allowable CAC', `$${fmt(maxCAC)}`, 'hl') +
+    metricHTML('Actual MER', fmtMER(actualMER), 'hl') +
+    metricHTML('MER Gap', fmtMER(merGap), 'hl ' + (merGap > 0 ? 'pos' : 'neg'));
+
+  document.getElementById('profit-metrics').innerHTML =
+    metricHTML('Contribution After Marketing', `$${fmt(cam)}`, cam >= 0 ? 'pos' : 'neg') +
+    metricHTML('Net Profit', `${netProfit < 0 ? '-' : ''}$${fmt(netProfit)}`, 'large ' + (netProfit >= 0 ? 'pos' : 'neg')) +
+    metricHTML('Net Profit Margin', fmtPct(netProfitMargin), netProfitMargin >= 0 ? 'pos' : 'neg');
+
+  const gap = breakEvenRevenue - currentRevenue;
+  document.getElementById('breakeven-callout').innerHTML =
+    `Breakeven revenue at current spend: <strong style="color:#e2b714">$${fmt(breakEvenRevenue)}</strong> &nbsp;·&nbsp; You need <strong style="color:#e2b714">$${fmt(Math.max(0, gap))}</strong> more revenue to break even.`;
+
+  // Slider visual
+  const min = 1000, max = 150000;
+  const pct = ((scenarioSpend - min) / (max - min)) * 100;
+  document.getElementById('slider-fill').style.width = pct + '%';
+  document.getElementById('slider-thumb').style.left = pct + '%';
+  document.getElementById('spend-label').textContent = '$' + fmt(scenarioSpend);
+
+  // MER indicator
+  const ind = document.getElementById('mer-indicator');
+  ind.textContent = fmtMER(actualMER) + 'x ' + (actualMER >= idealMER ? '✓' : '✗');
+  ind.style.color = actualMER >= idealMER ? '#4ade80' : '#f87171';
+
+  // Zone bars
+  const scale = 20;
+  document.getElementById('zone-loss').style.width = Math.min((breakEvenMER / scale) * 100, 100) + '%';
+  document.getElementById('zone-mid').style.left = (breakEvenMER / scale) * 100 + '%';
+  document.getElementById('zone-mid').style.width = ((idealMER - breakEvenMER) / scale) * 100 + '%';
+  document.getElementById('zone-profit').style.left = (idealMER / scale) * 100 + '%';
+  document.getElementById('zone-profit').style.right = '0';
+
+  // Scenario grid
+  const isProfit = netProfit >= 0;
+  document.getElementById('scenario-grid').innerHTML = `
+    <div class="mini-card" style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);">
+      <p class="mc-label">Actual MER</p>
+      <p class="mc-value" style="color:${actualMER >= idealMER ? '#4ade80' : '#f87171'}">${fmtMER(actualMER)}x</p>
+      <p class="mc-sub">Target: ${fmtMER(idealMER)}x</p>
+    </div>
+    <div class="mini-card" style="background:${isProfit ? 'rgba(74,222,128,0.08)' : 'rgba(248,113,113,0.08)'};border:1px solid ${isProfit ? 'rgba(74,222,128,0.2)' : 'rgba(248,113,113,0.2)'};">
+      <p class="mc-label">Net Profit</p>
+      <p class="mc-value" style="color:${isProfit ? '#4ade80' : '#f87171'};font-size:18px;">${netProfit < 0 ? '-' : ''}$${fmt(netProfit)}</p>
+      <p class="mc-sub">${fmtPct(netProfitMargin)} margin</p>
+    </div>`;
+
+  document.getElementById('scenario-detail').innerHTML =
+    metricHTML('Contribution After Marketing', `$${fmt(cam)}`, cam >= 0 ? 'pos' : 'neg') +
+    metricHTML('Revenue needed to break even', `$${fmt(breakEvenRevenue)}`) +
+    metricHTML('Revenue needed for target profit', `$${fmt(targetRevenue)}`);
+
+  const ins = document.getElementById('scenario-insight');
+  if (isProfit) {
+    ins.style.background = 'rgba(74,222,128,0.06)';
+    ins.style.border = '1px solid rgba(74,222,128,0.15)';
+    ins.style.color = '#4ade80';
+    ins.textContent = `✓ At $${fmt(scenarioSpend)}/mo spend, you're profitable. MER of ${fmtMER(actualMER)}x is above your ideal of ${fmtMER(idealMER)}x.`;
+  } else {
+    ins.style.background = 'rgba(248,113,113,0.06)';
+    ins.style.border = '1px solid rgba(248,113,113,0.15)';
+    ins.style.color = '#f87171';
+    ins.textContent = `✗ At $${fmt(scenarioSpend)}/mo spend, you need $${fmt(Math.max(0, breakEvenRevenue - currentRevenue))} more in monthly revenue to break even.`;
+  }
+}
+
+function onSplitSlider() {
+  // When slider is dragged, redistribute total spend across channels then recalc
+  const splitPct = parseFloat(document.getElementById('splitPct').value) || 0;
+  const totalSpend = (parseFloat(document.getElementById('g-spend').value) || 0) +
+                     (parseFloat(document.getElementById('m-spend').value) || 0);
+  document.getElementById('g-spend').value = Math.round(totalSpend * (splitPct / 100));
+  document.getElementById('m-spend').value = Math.round(totalSpend * ((100 - splitPct) / 100));
+  calcBridge();
+}
+
+function syncSpend(ch) {
+  // keep total spend in sync when individual channel spend changes
+  const g = parseFloat(document.getElementById('g-spend').value) || 0;
+  const m = parseFloat(document.getElementById('m-spend').value) || 0;
+  document.getElementById('b-totalSpend').value = g + m;
+  // update split slider
+  const total = g + m;
+  if (total > 0) document.getElementById('splitPct').value = Math.round((g / total) * 100);
+}
+
+function calcBridge() {
+  const totalRevenue = parseFloat(document.getElementById('b-totalRevenue').value) || 0;
+  const gROAS = parseFloat(document.getElementById('g-roas').value) || 0;
+  const mROAS = parseFloat(document.getElementById('m-roas').value) || 0;
+  const gAttr = parseFloat(document.getElementById('g-attr').value) || 1;
+  const mAttr = parseFloat(document.getElementById('m-attr').value) || 1;
+  const haloPct = parseFloat(document.getElementById('haloPct').value) || 0;
+  const metaChangePct = parseFloat(document.getElementById('metaChangePct').value) || 0;
+
+  // Use channel spend inputs as source of truth
+  const gSpend = parseFloat(document.getElementById('g-spend').value) || 0;
+  const mSpend = parseFloat(document.getElementById('m-spend').value) || 0;
+  const totalSpend = gSpend + mSpend;
+
+  // Keep total spend field in sync
+  document.getElementById('b-totalSpend').value = totalSpend.toFixed(0);
+
+  // Update split slider to reflect actual spend ratio (display only)
+  const splitPct = totalSpend > 0 ? Math.round((gSpend / totalSpend) * 100) : 50;
+  document.getElementById('splitPct').value = splitPct;
+  document.getElementById('split-label').textContent = `${splitPct}% / ${100 - splitPct}%`;
+  document.getElementById('split-fill').style.width = splitPct + '%';
+  document.getElementById('split-thumb').style.left = splitPct + '%';
+  document.getElementById('g-split-spend').textContent = '$' + fmt(gSpend);
+  document.getElementById('m-split-spend').textContent = '$' + fmt(mSpend);
+
+  // Halo slider visuals
+  const haloPctNorm = (haloPct / 80) * 100;
+  document.getElementById('halo-fill').style.width = haloPctNorm + '%';
+  document.getElementById('halo-thumb').style.left = haloPctNorm + '%';
+  document.getElementById('halo-label').textContent = haloPct + '%';
+
+  // Meta change slider visuals
+  const changeNorm = ((metaChangePct + 100) / 200) * 100;
+  document.getElementById('meta-change-thumb').style.left = changeNorm + '%';
+  document.getElementById('meta-change-label').textContent = (metaChangePct >= 0 ? '+' : '') + metaChangePct + '%';
+  document.getElementById('meta-change-label').style.color = metaChangePct >= 0 ? '#4ade80' : '#f87171';
+  if (metaChangePct >= 0) {
+    document.getElementById('meta-change-fill').style.left = '50%';
+    document.getElementById('meta-change-fill').style.width = (changeNorm - 50) + '%';
+    document.getElementById('meta-change-fill').style.background = 'linear-gradient(90deg,#4ade80,#86efac)';
+    document.getElementById('meta-change-thumb').style.background = '#4ade80';
+    document.getElementById('meta-change-thumb').style.boxShadow = '0 0 8px rgba(74,222,128,0.5)';
+  } else {
+    document.getElementById('meta-change-fill').style.left = changeNorm + '%';
+    document.getElementById('meta-change-fill').style.width = (50 - changeNorm) + '%';
+    document.getElementById('meta-change-fill').style.background = 'linear-gradient(90deg,#f87171,#fbbf24)';
+    document.getElementById('meta-change-thumb').style.background = '#f87171';
+    document.getElementById('meta-change-thumb').style.boxShadow = '0 0 8px rgba(248,113,113,0.5)';
+  }
+
+  // --- Halo effect calculation ---
+  // How much does Google ROAS degrade when Meta spend changes?
+  // If Meta drops by X%, Google ROAS degrades by haloPct% of that drop
+  const metaSpendNew = mSpend * (1 + metaChangePct / 100);
+  const metaSpendDeltaPct = metaChangePct / 100; // e.g. -0.5 for -50%
+  const googleHaloDelta = metaSpendDeltaPct * (haloPct / 100); // e.g. -0.5 * 0.4 = -0.20
+  const gROASHaloAdjusted = gROAS * (1 + googleHaloDelta);
+  const newTotalSpend = gSpend + metaSpendNew;
+
+  // Reported revenue per channel (baseline)
+  const gReportedRev = gROAS * gSpend;
+  const mReportedRev = mROAS * mSpend;
+
+  // Halo-adjusted Google revenue in new scenario
+  const gReportedRevNew = gROASHaloAdjusted * gSpend;
+  const mReportedRevNew = mROAS * metaSpendNew;
+
+  // Adjusted (de-duplicated) revenue per channel
+  const gAdjRev = gReportedRev * gAttr;
+  const mAdjRev = mReportedRev * mAttr;
+  const blendedAttrRev = gAdjRev + mAdjRev;
+
+  // Actual blended MER (truth: total revenue / total spend)
+  const actualBlendedMER = totalRevenue > 0 && totalSpend > 0 ? totalRevenue / totalSpend : 0;
+  const reportedBlendedROAS = totalSpend > 0 ? (gReportedRev + mReportedRev) / totalSpend : 0;
+  const adjBlendedROAS = totalSpend > 0 ? blendedAttrRev / totalSpend : 0;
+  const inflationFactor = actualBlendedMER > 0 ? adjBlendedROAS / actualBlendedMER : 0;
+  const gTrueMER = inflationFactor > 0 ? gAdjRev / gSpend / inflationFactor : 0;
+  const mTrueMER = inflationFactor > 0 ? mAdjRev / mSpend / inflationFactor : 0;
+
+  // Scenario MER after Meta spend change + halo impact
+  const scenarioBlendedROAS = newTotalSpend > 0 ? (gReportedRevNew + mReportedRevNew) / newTotalSpend : 0;
+  const scenarioMER = newTotalSpend > 0 ? (totalRevenue / totalSpend) * (scenarioBlendedROAS / reportedBlendedROAS) : 0;
+
+  // Badges
+  document.getElementById('g-roas-badge').textContent = `ROAS ${gROAS.toFixed(1)}x → adj. ${(gROAS * gAttr).toFixed(1)}x`;
+  document.getElementById('m-roas-badge').textContent = `ROAS ${mROAS.toFixed(1)}x → adj. ${(mROAS * mAttr).toFixed(1)}x`;
+
+  // Get ideal MER from main calc
+  const aov = get('aov'), cogs = get('cogs'), shipping = get('shipping');
+  const payment = get('payment'), returns = get('returns'), targetMargin = get('targetMargin');
+  const paymentCost = aov * (payment / 100);
+  const returnsCost = aov * (returns / 100);
+  const totalVC = cogs + shipping + paymentCost + returnsCost;
+  const idealMER = aov / (aov - totalVC - aov * (targetMargin / 100));
+
+  // Halo impact cards
+  const gROASImpact = gROASHaloAdjusted - gROAS;
+  const mSpendImpact = metaSpendNew - mSpend;
+  const merImpact = scenarioMER - actualBlendedMER;
+  document.getElementById('halo-impact').innerHTML = `
+    <div style="background:rgba(66,133,244,0.08);border:1px solid rgba(66,133,244,0.15);border-radius:8px;padding:10px;text-align:center;">
+      <p style="font-size:9px;color:#6090c8;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px;">Google ROAS</p>
+      <p style="font-size:15px;font-family:'DM Mono',monospace;font-weight:700;color:${gROASImpact >= 0 ? '#4ade80' : '#f87171'};margin:0;">${gROASHaloAdjusted.toFixed(2)}x</p>
+      <p style="font-size:9px;color:${gROASImpact >= 0 ? '#4ade80' : '#f87171'};margin-top:3px;">${gROASImpact >= 0 ? '+' : ''}${gROASImpact.toFixed(2)}x halo</p>
+    </div>
+    <div style="background:rgba(24,119,242,0.08);border:1px solid rgba(24,119,242,0.15);border-radius:8px;padding:10px;text-align:center;">
+      <p style="font-size:9px;color:#5080b8;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px;">Meta Spend</p>
+      <p style="font-size:15px;font-family:'DM Mono',monospace;font-weight:700;color:${mSpendImpact >= 0 ? '#4ade80' : '#f87171'};margin:0;">$${fmt(metaSpendNew)}</p>
+      <p style="font-size:9px;color:${mSpendImpact >= 0 ? '#4ade80' : '#f87171'};margin-top:3px;">${mSpendImpact >= 0 ? '+' : '−'}$${fmt(Math.abs(mSpendImpact))}</p>
+    </div>
+    <div style="background:${merImpact >= 0 ? 'rgba(74,222,128,0.08)' : 'rgba(248,113,113,0.08)'};border:1px solid ${merImpact >= 0 ? 'rgba(74,222,128,0.2)' : 'rgba(248,113,113,0.2)'};border-radius:8px;padding:10px;text-align:center;">
+      <p style="font-size:9px;color:#708070;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px;">Blended MER</p>
+      <p style="font-size:15px;font-family:'DM Mono',monospace;font-weight:700;color:${merImpact >= 0 ? '#4ade80' : '#f87171'};margin:0;">${scenarioMER.toFixed(2)}x</p>
+      <p style="font-size:9px;color:${merImpact >= 0 ? '#4ade80' : '#f87171'};margin-top:3px;">${merImpact >= 0 ? '+' : ''}${merImpact.toFixed(2)}x impact</p>
+    </div>`;
+
+  document.getElementById('bridge-metrics').innerHTML =
+    metricHTML('Google Reported ROAS', `${gROAS.toFixed(2)}x`, 'hl') +
+    metricHTML('Google Adjusted ROAS (attr. discount)', `${(gROAS * gAttr).toFixed(2)}x`, 'hl') +
+    metricHTML('Google Halo-Adjusted ROAS', `${gROASHaloAdjusted.toFixed(2)}x`, gROASHaloAdjusted >= gROAS ? 'pos' : 'neg') +
+    metricHTML('Google True MER Contribution', `${gTrueMER.toFixed(2)}x`, gTrueMER >= idealMER ? 'pos' : 'neg') +
+    `<div style="height:1px;background:rgba(255,255,255,0.06);margin:8px 0;"></div>` +
+    metricHTML('Meta Reported ROAS', `${mROAS.toFixed(2)}x`, 'hl') +
+    metricHTML('Meta Adjusted ROAS (attr. discount)', `${(mROAS * mAttr).toFixed(2)}x`, 'hl') +
+    metricHTML('Meta True MER Contribution', `${mTrueMER.toFixed(2)}x`, mTrueMER >= idealMER ? 'pos' : 'neg') +
+    `<div style="height:1px;background:rgba(255,255,255,0.06);margin:8px 0;"></div>` +
+    metricHTML('Reported Blended ROAS', `${reportedBlendedROAS.toFixed(2)}x`, 'hl') +
+    metricHTML('Attribution-Adjusted ROAS', `${adjBlendedROAS.toFixed(2)}x`, 'hl') +
+    metricHTML('Actual Blended MER (true)', `${actualBlendedMER.toFixed(2)}x`, actualBlendedMER >= idealMER ? 'pos large' : 'neg large') +
+    metricHTML('Platform Overstatement Factor', `${inflationFactor > 0 ? inflationFactor.toFixed(2) : '—'}x`, 'hl');
+
+  const ins = document.getElementById('bridge-insight');
+  const overstate = ((inflationFactor - 1) * 100);
+  if (metaChangePct !== 0) {
+    const direction = metaChangePct > 0 ? 'increasing' : 'reducing';
+    const merColour = merImpact >= 0 ? '#4ade80' : '#f87171';
+    ins.style.background = merImpact >= 0 ? 'rgba(74,222,128,0.06)' : 'rgba(248,113,113,0.06)';
+    ins.style.border = `1px solid ${merImpact >= 0 ? 'rgba(74,222,128,0.15)' : 'rgba(248,113,113,0.15)'}`;
+    ins.style.color = merColour;
+    ins.innerHTML = `${metaChangePct > 0 ? '📈' : '⚠️'} ${direction.charAt(0).toUpperCase() + direction.slice(1)} Meta spend by ${Math.abs(metaChangePct)}% would shift Google ROAS to <strong>${gROASHaloAdjusted.toFixed(2)}x</strong> (halo effect: ${googleHaloDelta >= 0 ? '+' : ''}${(googleHaloDelta * 100).toFixed(0)}%) and move blended MER to <strong>${scenarioMER.toFixed(2)}x</strong> — ${scenarioMER >= idealMER ? 'still above' : 'below'} your ideal of ${idealMER.toFixed(2)}x.`;
+  } else if (inflationFactor > 1) {
+    ins.style.background = 'rgba(251,191,36,0.06)';
+    ins.style.border = '1px solid rgba(251,191,36,0.2)';
+    ins.style.color = '#fbbf24';
+    ins.innerHTML = `⚠️ Platforms overstating by <strong>${overstate.toFixed(0)}%</strong>. Reported ROAS ${reportedBlendedROAS.toFixed(2)}x vs actual MER ${actualBlendedMER.toFixed(2)}x. Use the Meta spend change slider above to model halo impact.`;
+  } else {
+    ins.style.background = 'rgba(74,222,128,0.06)';
+    ins.style.border = '1px solid rgba(74,222,128,0.15)';
+    ins.style.color = '#4ade80';
+    ins.innerHTML = `✓ Platform reporting broadly aligned with actual MER of ${actualBlendedMER.toFixed(2)}x vs ideal ${idealMER.toFixed(2)}x. Use the Meta spend change slider above to model halo impact.`;
+  }
+}
+
+
+function switchTab(name) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('panel-' + name).classList.add('active');
+  event.target.classList.add('active');
+  if (name === 'bridge') calcBridge(); else calc();
+}
+
+calc();
+calcBridge();
+</script>
+</body>
+</html>
